@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duyuru Servisi · Eğitmen Paneli</title>
+<style>
+  :root {
+    --zemin: #f4f1ea; --kart: #fffdf8; --metin: #1f1d1a; --soluk: #6b665d; --cizgi: #ddd6c8;
+    --vurgu: #b4462c; --vurgu-acik: #f6e3dc; --yesil: #2f6b4f; --mavi: #2b5a8a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--zemin); color: var(--metin);
+    font: 17px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  header {
+    background: var(--metin); color: var(--zemin); padding: 18px 28px;
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: .02em; }
+  .adres { font: 600 24px/1.2 ui-monospace, "Cascadia Code", Consolas, monospace; color: #f2c14e; }
+  .adres small { display: block; font: 13px system-ui, sans-serif; color: #b8b2a6; margin-bottom: 4px; }
+  main {
+    display: grid; gap: 20px; padding: 24px 28px; max-width: 1400px; margin: 0 auto;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  }
+  section { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 10px; padding: 20px 22px; }
+  h2 { margin: 0 0 14px; font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: var(--soluk); }
+  h2 .sayi { background: var(--vurgu); color: #fff; border-radius: 99px; padding: 1px 9px; margin-left: 6px; font-size: 13px; }
+  label { display: block; font-size: 14px; color: var(--soluk); margin: 10px 0 4px; }
+  input, select, textarea {
+    width: 100%; font: inherit; padding: 9px 11px; border: 1px solid var(--cizgi);
+    border-radius: 6px; background: #fff; color: var(--metin);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .satir { display: grid; grid-template-columns: 1fr 160px; gap: 10px; }
+  button {
+    font: 600 15px system-ui, sans-serif; padding: 10px 18px; border: 0; border-radius: 6px;
+    background: var(--metin); color: var(--zemin); cursor: pointer; margin-top: 12px;
+  }
+  button.ikincil { background: transparent; color: var(--soluk); border: 1px solid var(--cizgi); }
+  button.kucuk { padding: 4px 10px; margin: 0; font-size: 13px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 12px 0; border-top: 1px solid var(--cizgi); }
+  li:first-child { border-top: 0; }
+  .ust { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: var(--soluk); }
+  .etiket { font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+  .iptal { background: var(--vurgu-acik); color: var(--vurgu); }
+  .degisiklik { background: #e3ecf5; color: var(--mavi); }
+  .genel { background: #e5efe9; color: var(--yesil); }
+  .soru-metin { font-size: 19px; margin-top: 4px; }
+  li.yeni { animation: parla 2.5s ease-out; }
+  @keyframes parla { from { background: #fff1c2; } to { background: transparent; } }
+  .bos { color: var(--soluk); font-style: italic; }
+  .cubuk { margin: 10px 0; }
+  .cubuk .ad { display: flex; justify-content: space-between; font-size: 16px; }
+  .cubuk .iz { height: 14px; background: var(--zemin); border-radius: 7px; overflow: hidden; margin-top: 4px; }
+  .cubuk .dolu { height: 100%; background: var(--vurgu); transition: width .4s; }
+  .anket-baslik { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+  .not { font-size: 13px; color: var(--soluk); }
+  footer { text-align: center; padding: 10px 0 30px; }
+  @media (max-width: 500px) {
+    main { padding: 16px; grid-template-columns: 1fr; }
+    header { padding: 16px; }
+    .adres { font-size: 17px; word-break: break-all; }
+    .satir { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📡 Kampüs Duyuru Servisi</h1>
+  <div class="adres"><small>Öğrencilerin MCP adresi</small><span id="adres">…</span></div>
+</header>
+
+<main>
+  <section>
+    <h2>Duyuru yayınla</h2>
+    <form id="duyuruFormu">
+      <div class="satir">
+        <div>
+          <label for="ders">Ders</label>
+          <input id="ders" placeholder="Boş bırakılırsa: Genel" list="dersListesi">
+          <datalist id="dersListesi">
+            <option>Algoritmalar</option><option>Veritabanı Sistemleri</option>
+            <option>Yapay Zekâya Giriş</option><option>İşletim Sistemleri</option>
+          </datalist>
+        </div>
+        <div>
+          <label for="tur">Tür</label>
+          <select id="tur">
+            <option value="iptal">İptal</option>
+            <option value="degisiklik">Değişiklik</option>
+            <option value="genel" selected>Genel</option>
+          </select>
+        </div>
+      </div>
+      <label for="metin">Duyuru</label>
+      <textarea id="metin" placeholder="Yarınki ders iptal edilmiştir." required></textarea>
+      <button type="submit">Yayınla</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Gelen sorular <span class="sayi" id="soruSayisi">0</span></h2>
+    <ul id="sorular"></ul>
+  </section>
+
+  <section>
+    <h2>Yayındaki duyurular</h2>
+    <ul id="duyurular"></ul>
+  </section>
+
+  <section>
+    <h2>Anket</h2>
+    <div id="anketSonuc"></div>
+    <form id="anketFormu">
+      <label for="anketSoru">Yeni anket sorusu</label>
+      <input id="anketSoru" placeholder="Bugünkü konu ne kadar anlaşıldı?">
+      <label for="anketSecenek">Seçenekler (virgülle ayır)</label>
+      <input id="anketSecenek" placeholder="Çok iyi, Kısmen, Hiç anlamadım">
+      <button type="submit">Anketi başlat</button>
+      <button type="button" class="ikincil" id="anketKapat">Anketi kapat</button>
+    </form>
+  </section>
+</main>
+
+<footer>
+  <button type="button" class="ikincil" id="sifirla">Tüm verileri sıfırla</button>
+  <p class="not">Bu sayfa her 2 saniyede bir kendini yeniler. Sadece bu bilgisayardan açılabilir.</p>
+</footer>
+
+<script>
+  const gorulenSorular = new Set();
+  let ilkYukleme = true;
+
+  const kacir = (s) => String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  async function gonder(yol, govde) {
+    const cevap = await fetch(yol, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govde || {}),
+    });
+    if (!cevap.ok) alert((await cevap.json()).hata || "Bir hata oluştu.");
+    yenile();
+    return cevap.ok;
+  }
+
+  async function yenile() {
+    let veri;
+    try { veri = await (await fetch("/panel/veri")).json(); } catch { return; }
+    document.getElementById("adres").textContent = veri.adres;
+
+    // Sorular (en yenisi üstte, yeni gelenler parlar)
+    const sorular = [...veri.sorular].reverse();
+    document.getElementById("soruSayisi").textContent = sorular.length;
+    document.getElementById("sorular").innerHTML = sorular.length ? sorular.map((s) => {
+      const yeni = !ilkYukleme && !gorulenSorular.has(s.id);
+      gorulenSorular.add(s.id);
+      return `<li class="${yeni ? "yeni" : ""}"><div class="ust"><strong>${kacir(s.ogrenci)}</strong><span>${s.saat}</span></div>
+              <div class="soru-metin">${kacir(s.soru)}</div></li>`;
+    }).join("") : `<li class="bos">Henüz soru yok.</li>`;
+
+    // Duyurular
+    const turAdi = { iptal: "İPTAL", degisiklik: "DEĞİŞİKLİK", genel: "GENEL" };
+    const duyurular = [...veri.duyurular].reverse();
+    document.getElementById("duyurular").innerHTML = duyurular.length ? duyurular.map((d) => `
+      <li><div class="ust">
+            <span><span class="etiket ${d.tur}">${turAdi[d.tur] || d.tur}</span> ${kacir(d.ders)} · ${d.saat}</span>
+            <button class="ikincil kucuk" onclick="gonder('/panel/duyuru/sil', {id: ${d.id}})">Sil</button>
+          </div><div>${kacir(d.metin)}</div></li>`).join("") : `<li class="bos">Yayında duyuru yok.</li>`;
+
+    // Anket sonuçları
+    const a = veri.anket;
+    const kutu = document.getElementById("anketSonuc");
+    if (!a) { kutu.innerHTML = `<p class="bos">Aktif anket yok.</p>`; }
+    else {
+      const oylar = Object.values(a.oylar);
+      const toplam = oylar.length;
+      kutu.innerHTML = `<div class="anket-baslik">${kacir(a.soru)}</div>
+        <div class="not">${a.acik ? "🟢 Açık" : "🔒 Kapalı"} · ${toplam} oy</div>` +
+        a.secenekler.map((s) => {
+          const n = oylar.filter((o) => o === s).length;
+          const yuzde = toplam ? Math.round((n / toplam) * 100) : 0;
+          return `<div class="cubuk"><div class="ad"><span>${kacir(s)}</span><span>${n} (${yuzde}%)</span></div>
+                  <div class="iz"><div class="dolu" style="width:${yuzde}%"></div></div></div>`;
+        }).join("");
+    }
+    ilkYukleme = false;
+  }
+
+  document.getElementById("duyuruFormu").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const metin = document.getElementById("metin");
+    if (await gonder("/panel/duyuru", {
+      ders: document.getElementById("ders").value, tur: document.getElementById("tur").value, metin: metin.value,
+    })) metin.value = "";
+  });
+
+  document.getElementById("anketFormu").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const soru = document.getElementById("anketSoru"), secenek = document.getElementById("anketSecenek");
+    if (await gonder("/panel/anket", { soru: soru.value, secenekler: secenek.value.split(",") })) {
+      soru.value = ""; secenek.value = "";
+    }
+  });
+
+  document.getElementById("anketKapat").addEventListener("click", () => gonder("/panel/anket/kapat"));
+  document.getElementById("sifirla").addEventListener("click", () => {
+    if (confirm("Tüm duyurular, sorular ve anket silinecek. Emin misin?")) gonder("/panel/sifirla");
+  });
+
+  yenile();
+  setInterval(yenile, 2000);
+</script>
+</body>
+</html>
