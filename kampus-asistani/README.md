@@ -109,7 +109,8 @@ kampus-asistani/
 ├── postgres/init.sql      #   └─ Tablolar, örnek veriler, salt okunur kullanıcı
 ├── postgres_test.py       #   └─ PostgreSQL server'ını tek komutla test eder
 ├── duyuru_server.py       # Bölüm 4: Ağ üzerinden çalışan uzak MCP server (eğitmen çalıştırır)
-├── panel.html             #   └─ Eğitmen paneli (duyuru, soru, anket)
+├── panel.html             #   └─ Eğitmen paneli (server üzerinden açılır, çift tıklanmaz)
+├── gorseller/panel.png    # README'deki panel ekran görüntüsü
 └── requirements.txt       # Python paketleri
 ```
 
@@ -525,7 +526,7 @@ docker compose down -v     # Konteyneri durdur ve verileri sil (sonraki açılı
 ## 7. Bölüm 4: Uzak MCP server (Kampüs Duyuru Servisi)
 
 **Dosyalar:** `duyuru_server.py`, `panel.html` · **Gereken:** Aynı ağdaki iki bilgisayar
-(evde tek başına çalışıyorsan tek bilgisayar da yeter, bkz. [7.6](#76-evde-tek-başına-denemek))
+(evde tek başına çalışıyorsan tek bilgisayar da yeter, bkz. [7.7](#77-evde-tek-başına-denemek))
 
 Şimdiye kadarki server'ları **ajan kendisi başlatıyordu** (stdio). Gerçek dünyada ise birçok
 MCP server başka bir yerde, bağımsız bir servis olarak çalışır ve ajanlar ona ağ üzerinden
@@ -586,18 +587,62 @@ Terminalde öğrencilerin bağlanacağı adres ve hazır öğrenci komutu yazar:
    python ajan.py --kaynak postgres --duyuru http://192.168.1.10:8000/mcp --ad "Adın"
 ```
 
-Tarayıcıda **http://localhost:8000/panel** adresini aç. Panelden:
-- **Duyuru yayınlarsın** (ders, tür: iptal / değişiklik / genel, metin)
-- **Gelen soruları** canlı görürsün (yeni gelen soru sarı renkle parlar)
-- **Anket başlatır**, oyları canlı çubuk grafik olarak izlersin
+Server açık kaldığı sürece terminali kapatma; gelen her istek orada da görünür.
 
-Panel öğrencilerin MCP adresini de büyük harflerle gösterir; projeksiyona yansıtabilirsin.
+### 7.3 Eğitmen paneli
+
+Panel, duyuru servisini yönettiğin web sayfasıdır. Server çalışırken tarayıcıda şu adresi aç:
+
+**http://localhost:8000/panel**
+
+> ⚠️ **`panel.html` dosyasına çift tıklayarak açma.** Sayfa verilerini server'dan aldığı için
+> dosya olarak açıldığında boş görünür (sayfanın üstünde bir uyarı çıkar). Panel her zaman
+> `python duyuru_server.py` çalışırken yukarıdaki adresten açılır.
+
+![Eğitmen paneli](gorseller/panel.png)
+
+**Panelin bölümleri:**
+
+| Bölüm | Ne işe yarar | Öğrencinin ajanı bunu hangi araçla görür? |
+|---|---|---|
+| **Üst şerit** | Öğrencilerin bağlanacağı MCP adresi. Projeksiyona yansıt. | — |
+| **Duyuru yayınla** | Yeni duyuru girersin. | `duyurulari_getir` |
+| **Gelen sorular** | Öğrencilerin ajanları üzerinden gönderdiği sorular. En yenisi üstte. | `soru_sor` |
+| **Yayındaki duyurular** | Yayınladığın duyurular. **Sil** düğmesiyle kaldırabilirsin. | `duyurulari_getir` |
+| **Anket** | Anket başlatır, oyları canlı çubuk grafikle izlersin. | `aktif_anket`, `anket_oyu_ver` |
+
+Sayfa her 2 saniyede bir kendini yeniler; hiçbir şeyi elle yenilemene gerek yok.
+
+**Duyuru yayınlamak:**
+1. **Ders** kutusuna dersin adını yaz (öneri listesinden de seçebilirsin). Boş bırakırsan
+   duyuru "Genel" olur ve tüm derslerle ilgili sorularda görünür.
+2. **Tür** seç: **İptal** (ders yapılmayacak), **Değişiklik** (saat veya derslik değişti) ya da **Genel**.
+3. **Duyuru** kutusuna metni yaz. Günü açıkça belirt: "Yarın" yerine "Pazartesi günkü ders".
+4. **Yayınla**'ya bas. Duyuru sağdaki listede belirir; öğrencilerin ajanları bir sonraki
+   soruda onu görür.
+
+**Anket yapmak:**
+1. **Yeni anket sorusu** kutusuna soruyu yaz: `Bugünkü konu ne kadar anlaşıldı?`
+2. **Seçenekler** kutusuna seçenekleri virgülle ayırarak yaz: `Çok iyi, Kısmen, Hiç anlamadım`
+3. **Anketi başlat**'a bas. Öğrenciler ajanlarına "Aktif ankete katıl, kısmen diyorum" gibi
+   bir şey söylediğinde oylar çubuklarda canlı olarak artar.
+4. Bitince **Anketi kapat**'a bas; sonuçlar ekranda kalır ama yeni oy kabul edilmez.
+   Yeni bir anket başlatmak bir öncekini siler.
+
+Her öğrencinin bir oyu vardır. Aynı öğrenci tekrar oy verirse eski oyu değişir. Öğrenciler
+seçeneğin adıyla ("kısmen") ya da numarasıyla ("2") oy verebilir.
+
+**Soruları izlemek:** Öğrenciler ajanlarına "Hocaya sor: ..." dediğinde soru, öğrencinin adı ve
+saatiyle birlikte listeye düşer. Yeni gelen soru birkaç saniye sarı renkte parlar.
+
+**Sıfırlamak:** En alttaki **Tüm verileri sıfırla** düğmesi duyuruları, soruları ve anketi
+siler (onay ister). Prova sonrasında temiz başlamak için kullan.
 
 > 🔒 Panel **sadece eğitmenin bilgisayarından** açılabilir. Öğrenciler `http://<ip>:8000/panel`
 > adresini açmaya çalışırsa "403 Yasak" alır. Öğrenciler servise sadece MCP araçları üzerinden
 > erişebilir: duyuru okuyabilir, soru sorabilir, oy verebilir ama duyuru yayınlayamaz.
 
-### 7.3 Öğrenci: Ajanı iki server'a birden bağla
+### 7.4 Öğrenci: Ajanı iki server'a birden bağla
 
 ```bash
 python ajan.py --kaynak postgres --duyuru http://<eğitmenin-ip>:8000/mcp --ad "Adın"
@@ -617,7 +662,7 @@ bilmesine gerek de yoktur.
 
 `--ad` ile verdiğin isim sistem mesajına eklenir; ajan soru sorarken ve oy verirken bu adı kullanır.
 
-### 7.4 Denenecek senaryo
+### 7.5 Denenecek senaryo
 
 1. **Eğitmen** panelden duyuru yayınlar:
    Ders `Algoritmalar`, tür `İptal`, metin `Pazartesi günkü Algoritmalar dersi iptal edilmiştir.`
@@ -639,7 +684,7 @@ bilmesine gerek de yoktur.
 > "Pazartesi günkü ders" yaz. Duyurular yayın tarihiyle birlikte ajana iletilir, ama açık
 > bir ifade her zaman daha güvenilirdir.
 
-### 7.5 Güvenlik notları
+### 7.6 Güvenlik notları
 
 Bu servis bir eğitim aracıdır; internete açık bir yerde çalıştırılmamalıdır. Bilinçli olarak
 basit tutulan noktalar:
@@ -651,7 +696,7 @@ basit tutulan noktalar:
 - **Öğrenci girdisi panelde kaçırılır (escape).** Biri soru olarak `<script>` yazarsa kod
   çalışmaz, düz metin olarak görünür. Kullanıcıdan gelen her veriyi ekrana basmadan önce kaçır!
 
-### 7.6 Evde tek başına denemek
+### 7.7 Evde tek başına denemek
 
 İki rolü aynı bilgisayarda iki terminalle oynayabilirsin:
 
@@ -664,7 +709,7 @@ python duyuru_server.py
 python ajan.py --duyuru http://localhost:8000/mcp --ad "Ben"
 ```
 
-### 7.7 Verileri sıfırlamak
+### 7.8 Verileri sıfırlamak
 
 Panelin altındaki **"Tüm verileri sıfırla"** düğmesi duyuruları, soruları ve anketi siler.
 Alternatif olarak server'ı kapatıp `duyuru_veri.json` dosyasını silebilirsin.
@@ -804,6 +849,7 @@ Bu durum Alıştırma 7'nin neden önemli olduğunu gösterir.
 | `python server.py` sadece bekliyor | Normal; server agent'tan mesaj bekliyor. Bkz. [4.2](#42-server-ile-elle-konuş). |
 | Duyuru servisine bağlanılamıyor | (1) Eğitmenle **aynı ağda** mısın? (2) Adres doğru mu? IP, eğitmenin terminalinde yazar. (3) Eğitmen bilgisayarının **güvenlik duvarı** 8000 portuna izin veriyor mu? (4) Kampüs/misafir Wi-Fi'ları cihazların birbirini görmesini engelleyebilir (client isolation); telefon hotspot'u dene. |
 | Tarayıcıda `/mcp` adresi `Not Acceptable` hatası veriyor | Normal. MCP adresi tarayıcı için değil, ajan için. Bu hata bağlantının çalıştığını gösterir. |
+| Panel boş görünüyor / üstte kırmızı uyarı var | `panel.html` dosya olarak açılmış. `python duyuru_server.py` çalışırken tarayıcıda `http://localhost:8000/panel` adresini aç. |
 | Panel `403` hatası veriyor | Panel sadece server'ın çalıştığı bilgisayardan, `http://localhost:8000/panel` ile açılır. |
 | `address already in use` (duyuru servisi) | 8000 portu dolu. `DUYURU_PORT=8001` ortam değişkeniyle başka bir port seç. |
 | Ajan soruyu/oyu "Anonim" olarak gönderiyor | Ajanı `--ad "Adın"` ile başlat. |
@@ -878,8 +924,8 @@ python ajan.py --kaynak postgres --duyuru http://<ip>:8000/mcp --ad "Adın"   # 
 - [ ] **Ollama modeli:** `ollama pull qwen2.5:7b` (yedek olarak `qwen2.5:3b`)
 - [ ] **Uçtan uca prova:** `python postgres_test.py` → 10/10, ardından Bölüm 5.3 ve 6.6'daki
   soruları kendi makinende dene.
-- [ ] **Duyuru servisi provası:** İkinci bir cihazla (veya Bölüm 7.6'daki gibi iki terminalle)
-  7.4'teki senaryoyu baştan sona dene.
+- [ ] **Duyuru servisi provası:** İkinci bir cihazla (veya Bölüm 7.7'deki gibi iki terminalle)
+  7.5'teki senaryoyu baştan sona dene.
 - [ ] **Sıfırla:** Provadan sonra ajanın eklediği ödevler kalmasın diye
   `docker compose down -v && docker compose up -d`. JSON tarafında `veri/odevler.json`
   dosyasının orijinal halini yedekle. Duyuru servisini panelin "Tüm verileri sıfırla" düğmesiyle temizle.

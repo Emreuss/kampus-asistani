@@ -1,0 +1,29 @@
+{
+  "duyurular": [
+    {
+      "id": 1,
+      "tarih": "10.10.2026",
+      "saat": "21:30",
+      "ders": "Genel",
+      "tur": "genel",
+      "metin": "Kampüs Duyuru Servisi'ne hoş geldiniz! Duyurular burada yayınlanacak."
+    },
+    {
+      "id": 2,
+      "tarih": "10.10.2026",
+      "saat": "21:31",
+      "ders": "Algoritmalar",
+      "tur": "iptal",
+      "metin": "Yarınki ders iptal edilmiştir"
+    }
+  ],
+  "sorular": [
+    {
+      "id": 1,
+      "saat": "21:34",
+      "ogrenci": "Emre",
+      "soru": "Algoritma dersi sınavı sonuçları ne zaman açıklanacak?"
+    }
+  ],
+  "anket": null
+}

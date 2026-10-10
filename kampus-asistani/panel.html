@@ -74,14 +74,20 @@
   <div class="adres"><small>Öğrencilerin MCP adresi</small><span id="adres">…</span></div>
 </header>
 
+<div id="dosyaUyarisi" hidden style="background:#b4462c;color:#fff;padding:18px 28px;font-size:18px">
+  ⚠️ Bu sayfayı dosya olarak açtın, bu yüzden boş görünüyor. Panel, server üzerinden açılmalı:<br>
+  1) Terminalde <code>python duyuru_server.py</code> komutunu çalıştır.
+  2) Tarayıcıda <strong>http://localhost:8000/panel</strong> adresini aç.
+</div>
+
 <main>
   <section>
     <h2>Duyuru yayınla</h2>
     <form id="duyuruFormu">
       <div class="satir">
         <div>
-          <label for="ders">Ders</label>
-          <input id="ders" placeholder="Boş bırakılırsa: Genel" list="dersListesi">
+          <label for="ders">Ders (boş = Genel)</label>
+          <input id="ders" placeholder="Örn. Algoritmalar" list="dersListesi">
           <datalist id="dersListesi">
             <option>Algoritmalar</option><option>Veritabanı Sistemleri</option>
             <option>Yapay Zekâya Giriş</option><option>İşletim Sistemleri</option>
@@ -211,8 +217,13 @@
     if (confirm("Tüm duyurular, sorular ve anket silinecek. Emin misin?")) gonder("/panel/sifirla");
   });
 
-  yenile();
-  setInterval(yenile, 2000);
+  if (location.protocol === "file:") {
+    // panel.html'e çift tıklanmış: server olmadan veri gelmez, kullanıcıyı yönlendir.
+    document.getElementById("dosyaUyarisi").hidden = false;
+  } else {
+    yenile();
+    setInterval(yenile, 2000);
+  }
 </script>
 </body>
 </html>
