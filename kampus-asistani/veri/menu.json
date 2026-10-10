@@ -1,0 +1,9 @@
+{
+  "pazartesi": ["Mercimek çorbası", "Tavuk sote", "Pilav", "Ayran"],
+  "salı": ["Ezogelin çorbası", "Kuru fasulye", "Bulgur pilavı", "Turşu"],
+  "çarşamba": ["Domates çorbası", "Karnıyarık", "Makarna", "Sütlaç"],
+  "perşembe": ["Yayla çorbası", "Izgara köfte", "Patates püresi", "Salata"],
+  "cuma": ["Tarhana çorbası", "Fırın tavuk", "Pilav", "Revani"],
+  "cumartesi": ["Yemekhane kapalı"],
+  "pazar": ["Yemekhane kapalı"]
+}

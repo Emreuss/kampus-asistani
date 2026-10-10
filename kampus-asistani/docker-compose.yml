@@ -1,0 +1,31 @@
+# Kampüs Asistanı - PostgreSQL veritabanı
+#
+# Başlat:      docker compose up -d
+# Durum:       docker compose ps          (STATUS "healthy" olmalı)
+# psql ile bağlan: docker exec -it kampus-postgres psql -U kampus
+# Sıfırla:     docker compose down -v && docker compose up -d
+#              (init.sql SADECE veritabanı ilk kez oluşturulurken çalışır!)
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: kampus-postgres
+    environment:
+      POSTGRES_USER: kampus
+      POSTGRES_PASSWORD: kampus123
+      POSTGRES_DB: kampus
+      TZ: Europe/Istanbul
+    ports:
+      # Bilgisayarında zaten PostgreSQL varsa 5432 dolu olabilir; bu yüzden 5433 kullanıyoruz.
+      - "5433:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - kampus-veri:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kampus -d kampus"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  kampus-veri:

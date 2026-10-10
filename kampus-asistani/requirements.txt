@@ -1,0 +1,9 @@
+# Sadece ajan.py için gerekli. server.py ve istemci.py hiçbir paket istemez.
+langgraph==1.2.14
+langchain-core==1.6.9
+langchain-mcp-adapters==0.3.2
+langchain-ollama==1.1.0
+# PostgreSQL senaryosu için (server_postgres.py):
+psycopg[binary]==3.3.6
+# İnternetli demoda Claude kullanmak istersen:
+langchain-anthropic==1.7.5

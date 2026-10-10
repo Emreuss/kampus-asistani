@@ -1,0 +1,21 @@
+{
+  "pazartesi": [
+    {"saat": "09:00", "ders": "Algoritmalar", "derslik": "B-201"},
+    {"saat": "13:00", "ders": "Veritabanı Sistemleri", "derslik": "Lab-3"}
+  ],
+  "salı": [
+    {"saat": "10:00", "ders": "Yapay Zekâya Giriş", "derslik": "A-105"}
+  ],
+  "çarşamba": [
+    {"saat": "09:00", "ders": "Algoritmalar", "derslik": "B-201"},
+    {"saat": "15:00", "ders": "İşletim Sistemleri", "derslik": "C-302"}
+  ],
+  "perşembe": [
+    {"saat": "11:00", "ders": "Yapay Zekâya Giriş", "derslik": "A-105"}
+  ],
+  "cuma": [
+    {"saat": "14:00", "ders": "Veritabanı Sistemleri", "derslik": "Lab-3"}
+  ],
+  "cumartesi": [],
+  "pazar": []
+}
