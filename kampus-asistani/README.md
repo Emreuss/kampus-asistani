@@ -185,14 +185,39 @@ pip install -r requirements.txt
 3. Ollama arka planda çalışıyor olmalı (kurulumdan sonra genelde otomatik başlar).
    Kontrol: `ollama list`
 
-**Alternatif: Claude (internet ve API anahtarı gerekir)**
+**Alternatif LLM sağlayıcıları (internet ve API anahtarı gerekir)**
+
+Ajan üç sağlayıcıyı destekler; `--model` ile seçilir:
+
+| `--model` | Ne? | Gereken | Varsayılan model |
+|---|---|---|---|
+| `ollama` (varsayılan) | Kendi bilgisayarında çalışan yerel model | Ollama kurulumu | `qwen2.5:7b` |
+| `anthropic` | Claude modelleri | `ANTHROPIC_API_KEY` | `claude-haiku-5-5` |
+| `openrouter` | Tek anahtarla yüzlerce model (OpenAI, Google, Meta, Mistral...) | `OPENROUTER_API_KEY` | `openai/gpt-4o-mini` |
+
 ```bash
 # macOS / Linux
 export ANTHROPIC_API_KEY="sk-ant-..."
+export OPENROUTER_API_KEY="sk-or-..."
 # Windows (PowerShell)
 $env:ANTHROPIC_API_KEY="sk-ant-..."
+$env:OPENROUTER_API_KEY="sk-or-..."
 ```
-Sonra ajanı `--model anthropic` ile çalıştırırsın.
+
+**OpenRouter ile model seçmek:** OpenRouter'da model adları `sağlayıcı/model` biçimindedir.
+Anahtarını [openrouter.ai/keys](https://openrouter.ai/keys) adresinden alırsın. Ajan araç
+kullandığı için seçtiğin model **araç çağırmayı (tool calling) desteklemeli**; uygun modelleri
+[openrouter.ai/models?supported_parameters=tools](https://openrouter.ai/models?supported_parameters=tools)
+adresinde filtreleyebilirsin.
+
+```bash
+python ajan.py --model openrouter                                    # varsayılan model
+python ajan.py --model openrouter --model-adi google/gemini-2.5-flash
+python ajan.py --model openrouter --model-adi meta-llama/llama-3.3-70b-instruct
+```
+
+> 💡 Aynı soruları farklı modellerle sorup karşılaştırmak iyi bir deney: Hangi model iki aracı
+> aynı anda çağırıyor? Hangisi hatalı tarihten sonra kendini düzeltiyor? Ajan kodu hiç değişmiyor.
 
 ### 3.4 Docker (sadece Bölüm 3 için)
 
@@ -312,7 +337,9 @@ python ajan.py                                # Ollama ile sohbet
 python ajan.py --protokol                     # + server'daki MCP trafiğini de göster
 python ajan.py --soru "Yarın derslerim neler?" # Tek soru sor ve çık
 python ajan.py --model anthropic              # Claude ile
+python ajan.py --model openrouter             # OpenRouter ile (varsayılan: openai/gpt-4o-mini)
 python ajan.py --model-adi qwen2.5:3b         # Farklı bir Ollama modeli
+python ajan.py --model openrouter --model-adi google/gemini-2.5-flash   # Farklı bir OpenRouter modeli
 python ajan.py --graf                         # Grafın Mermaid çizimi (mermaid.live'a yapıştır)
 ```
 
@@ -840,6 +867,11 @@ Bu durum Alıştırma 7'nin neden önemli olduğunu gösterir.
 | `ConnectError: All connection attempts failed` | Ollama çalışmıyor. `ollama serve` ile başlat ya da Ollama uygulamasını aç. |
 | `model "qwen2.5:7b" not found` | Model indirilmemiş: `ollama pull qwen2.5:7b` |
 | Ajan araçları hiç kullanmıyor, cevap uyduruyor | Küçük modeller araç çağırmada zorlanabilir. `qwen2.5:7b` veya daha büyük bir model dene. |
+| `OPENROUTER_API_KEY ortam değişkeni tanımlı değil` | Anahtarı [openrouter.ai/keys](https://openrouter.ai/keys)'ten al ve yukarıdaki `export` / `$env:` komutuyla tanımla. Yeni terminal açtıysan tekrar tanımlaman gerekir. |
+| OpenRouter: `401` hatası | API anahtarı yanlış ya da silinmiş. |
+| OpenRouter: `402` hatası | Hesabında kredi kalmamış. |
+| OpenRouter: `404` veya "No endpoints found that support tool use" | Model adı yanlış ya da model araç çağırmayı desteklemiyor. [Araç destekleyen modellerden](https://openrouter.ai/models?supported_parameters=tools) birini seç. |
+| `ModuleNotFoundError: No module named 'langchain_openai'` | `pip install -r requirements.txt` (OpenRouter için `langchain-openai` paketi gerekir). |
 | PowerShell: "running scripts is disabled" | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` çalıştır, sonra tekrar etkinleştir. |
 | Türkçe karakterler bozuk görünüyor (Windows) | Windows Terminal kullan veya terminalde `chcp 65001` çalıştır. |
 | `Veritabanına bağlanılamadı` | Docker Desktop açık mı? `docker compose ps` ile konteynerin `healthy` olduğunu kontrol et. |
@@ -861,6 +893,8 @@ Bu durum Alıştırma 7'nin neden önemli olduğunu gösterir.
 | `OLLAMA_MODEL` | `qwen2.5:7b` | Kullanılacak Ollama modeli |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama'nın adresi (başka bilgisayardaysa) |
 | `ANTHROPIC_API_KEY` | — | `--model anthropic` için |
+| `OPENROUTER_API_KEY` | — | `--model openrouter` için |
+| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | `--model-adi` yazmak yerine OpenRouter modeli |
 | `KAMPUS_LOG` | `detay` | `sessiz` yaparsan server sadece hataları loglar |
 | `KAMPUS_DB` | `postgresql://kampus:kampus123@localhost:5433/kampus` | Yazma yetkili bağlantı |
 | `KAMPUS_DB_OKUYUCU` | `postgresql://ajan_okuyucu:okuyucu123@localhost:5433/kampus` | `sql_sorgula` bağlantısı |

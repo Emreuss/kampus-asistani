@@ -15,6 +15,7 @@ Mimari:
 Kullanım:
     python ajan.py                          # Ollama ile sohbet (internetsiz)
     python ajan.py --model anthropic        # Claude ile (internet + ANTHROPIC_API_KEY)
+    python ajan.py --model openrouter       # OpenRouter ile (internet + OPENROUTER_API_KEY)
     python ajan.py --soru "Yarın derslerim neler?"   # Tek soru sor ve çık
     python ajan.py --graf                   # Grafiğin Mermaid çizimini yazdır
     python ajan.py --protokol               # Server'daki MCP trafiğini de canlı göster
@@ -69,7 +70,29 @@ def model_sec(saglayici, model_adi=None):
     if saglayici == "anthropic":
         from langchain_anthropic import ChatAnthropic
         return ChatAnthropic(model=model_adi or "claude-haiku-5-5", temperature=0)
+    if saglayici == "openrouter":
+        # OpenRouter, yüzlerce modele (OpenAI, Google, Meta, Mistral...) tek bir API anahtarıyla
+        # erişim sağlar. API'si OpenAI ile uyumlu olduğu için ChatOpenAI'ı OpenRouter'ın
+        # adresine yönlendirmemiz yeterli. Model adları "saglayici/model" biçimindedir.
+        anahtar = os.getenv("OPENROUTER_API_KEY")
+        if not anahtar:
+            raise ValueError("OPENROUTER_API_KEY ortam değişkeni tanımlı değil. "
+                             "Anahtarını https://openrouter.ai/keys adresinden alabilirsin.")
+        from langchain_openai import ChatOpenAI
+        return ChatOpenAI(
+            model=model_adi or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
+            base_url="https://openrouter.ai/api/v1",
+            api_key=anahtar,
+            temperature=0,
+            # İsteğe bağlı: uygulamanın OpenRouter panelinde hangi adla görüneceği
+            default_headers={"X-Title": "Kampus Asistani"},
+        )
     raise ValueError(f"Bilinmeyen model sağlayıcı: {saglayici}")
+
+
+def model_adi_bul(model):
+    """Ekranda göstermek için modelin adını bulur (sağlayıcıya göre alan adı değişir)."""
+    return getattr(model, "model_name", None) or getattr(model, "model", "?")
 
 
 def sistem_mesaji(ogrenci_adi=None):
@@ -99,7 +122,14 @@ def graf_olustur(model, araclar, ogrenci_adi=None):
 
     async def ajan(durum: MessagesState):
         """Düğüm 1: Model mesajlara bakar; ya araç çağırmaya karar verir ya da cevap yazar."""
-        cevap = await model_araclarla.ainvoke([sistem_mesaji(ogrenci_adi)] + durum["messages"])
+        # MCP araç sonuçları "içerik blokları listesi" olarak gelir. Bazı sağlayıcılar (OpenRouter
+        # üzerindeki bazı modeller gibi) araç mesajında düz metin bekler; bu yüzden metne çeviriyoruz.
+        mesajlar = [
+            m.model_copy(update={"content": metne_cevir(m.content)})
+            if isinstance(m, ToolMessage) and isinstance(m.content, list) else m
+            for m in durum["messages"]
+        ]
+        cevap = await model_araclarla.ainvoke([sistem_mesaji(ogrenci_adi)] + mesajlar)
         return {"messages": [cevap]}
 
     graf = StateGraph(MessagesState)
@@ -144,12 +174,17 @@ async def guvenli_sor(graf, soru, model):
                   "   Model indirildi mi? 'ollama list' ile kontrol et, yoksa 'ollama pull qwen2.5:7b'.")
         elif model == "anthropic":
             print("💡 İnternet bağlantını ve ANTHROPIC_API_KEY ortam değişkenini kontrol et.")
+        elif model == "openrouter":
+            print("💡 İnternet bağlantını ve OPENROUTER_API_KEY'i kontrol et. Hesabında kredi var mı?\n"
+                  "   Model adı doğru mu? (örn. openai/gpt-4o-mini) Seçtiğin model araç çağırmayı\n"
+                  "   desteklemeli: https://openrouter.ai/models?supported_parameters=tools")
 
 
 async def main():
     p = argparse.ArgumentParser(description="Kampüs Asistanı Ajanı")
-    p.add_argument("--model", default="ollama", choices=["ollama", "anthropic"])
-    p.add_argument("--model-adi", help="Örn. qwen2.5:7b, llama3.1:8b")
+    p.add_argument("--model", default="ollama", choices=["ollama", "anthropic", "openrouter"],
+                   help="LLM sağlayıcısı (varsayılan: ollama)")
+    p.add_argument("--model-adi", help="Örn. qwen2.5:7b (Ollama), openai/gpt-4o-mini (OpenRouter)")
     p.add_argument("--soru", help="Tek bir soru sor ve çık")
     p.add_argument("--graf", action="store_true", help="Grafın Mermaid çizimini yazdır")
     p.add_argument("--protokol", action="store_true", help="Server'ın gelen/giden MCP mesaj loglarını da göster")
@@ -207,8 +242,17 @@ async def main():
         if a.duyuru and not a.ad:
             print(f"{GRI}💡 Soru sorarken ve oy verirken adının görünmesi için --ad \"Adın\" ekleyebilirsin.{SIFIRLA}")
 
+        try:
+            model = model_sec(a.model, a.model_adi)
+        except (ValueError, ImportError) as hata:
+            print(f"❌ Model hazırlanamadı: {hata}")
+            if isinstance(hata, ImportError):
+                print("💡 Paketler eksik olabilir: pip install -r requirements.txt")
+            return
+        print(f"{MAVI}🧠 Model: {a.model} · {model_adi_bul(model)}{SIFIRLA}")
+
         # Ajan için iki server'ın araçları tek bir liste; hangisinin nereden geldiğini bilmez bile.
-        graf = graf_olustur(model_sec(a.model, a.model_adi), araclar, a.ad)
+        graf = graf_olustur(model, araclar, a.ad)
 
         if a.graf:
             print(graf.get_graph().draw_mermaid())
@@ -217,7 +261,7 @@ async def main():
             await guvenli_sor(graf, a.soru, a.model)
             return
 
-        print(f"Model: {a.model}. Çıkmak için 'q' yaz.\n")
+        print("Çıkmak için 'q' yaz.\n")
         while True:
             # input() beklerken arka plandaki MCP bağlantısı donmasın diye ayrı thread'de soruyoruz.
             soru = (await asyncio.to_thread(input, f"{MAVI}👤 Sen:{SIFIRLA} ")).strip()
